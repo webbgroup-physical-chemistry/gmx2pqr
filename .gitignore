@@ -1,0 +1,5 @@
+*.xvg
+*.o
+*.xtc
+gmx2pqr
+*.txt

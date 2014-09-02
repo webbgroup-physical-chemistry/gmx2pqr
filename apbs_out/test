@@ -1,0 +1,9 @@
+#! /bin/bash
+
+clear
+if [ -f read_apbs_rxn_field ] ; then rm read_apbs_rxn_field ; fi
+make -j 7
+if [ -f read_apbs_rxn_field ] ; then
+    ./read_apbs_rxn_field examples/Ral+N27C.0-0.234.pqr examples/Ral+N27C.0-0.234.78.txt examples/Ral+N27C.0-0.234.1.txt
+    ./read_apbs_rxn_field examples/Ral+N27C.0-0.water234.pqr examples/Ral+N27C.0-0.water234.78.txt examples/Ral+N27C.0-0.water234.1.txt
+    fi

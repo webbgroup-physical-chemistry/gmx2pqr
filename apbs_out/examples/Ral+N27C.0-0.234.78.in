@@ -1,0 +1,60 @@
+read 
+    mol pqr Ral+N27C.0-0.234.pqr 
+end 
+
+# stage 4 
+# based on suggestions from Gernot Kierseritzky and stage4 described 
+# in stages-logic.txt; changed to lpbe for boundary and convergence 
+# issues when we go to finer grids, and spl2 because of fewer off- 
+# the-grid warnings. 
+elec 
+    mg-manual 
+
+    dime 97 97 97 
+    glen 240.0 240.0 240.0 # 2.5 Angstroms 
+
+    gcent mol 1 
+    mol 1 
+    lpbe 
+    bcfl sdh # faster than mdh and probably good enough if the coarse grid is large enough 
+
+    ion charge 1 conc 0.150 radius 2.0 
+    ion charge -1 conc 0.150 radius 2.0 
+    pdie 1 
+    sdie 78 
+    chgm spl2 
+    srfm mol 
+    srad 1.4 
+    sdens 10.0 
+    temp 300.0 
+    calcenergy total 
+    calcforce no 
+end 
+# stage2 
+# 193 193 193 
+# 10 10 10 
+elec 
+    mg-manual 
+
+    glen 10 10 10 
+    dime 193 193 193 
+    gcent   16.505    5.675    3.885S 
+    mol 1 
+    lpbe 
+    bcfl focus 
+
+    ion charge 1 conc 0.150 radius 2.0 
+    ion charge -1 conc 0.150 radius 2.0 
+    pdie 1 
+    sdie 78 
+    chgm spl2 
+    srfm mol 
+    srad 1.4 
+    sdens 10.0 
+    temp 300.0 
+    calcenergy total 
+    calcforce no 
+    write atompot flat Ral+N27C.0-0.234.78 
+end 
+
+quit
