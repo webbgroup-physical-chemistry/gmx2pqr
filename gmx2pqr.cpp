@@ -125,25 +125,19 @@ static int analyze_frame(t_topology *top, t_trxframe *fr, t_pbc *pbc,
      * The x-axis is the cross product of the y-axis with the z-axis
      */
     double zvec[3] = { bondvector[0] / bondlength, bondvector[1] / bondlength, bondvector[2] / bondlength };
-    double yvec[3];
-    if (zvec[1] != zvec[2] ) {
-        yvec[0] = 1 ; yvec[1] = zvec[2]; yvec[2] = -zvec[1];
-    }
-    else if (zvec[0] != zvec[1]) {
-        yvec[0] = zvec[1] ; yvec[1] = -zvec[0]; yvec[2] = 1;
-    }
-    else if ( zvec[0] != zvec[2]) {
-        yvec[0] = zvec[2] ; yvec[1] = 1; yvec[2] = -zvec[0];
-    }
+    double yvec[3] = { 1, 1, 1 };
+    if (zvec[0] != 0 ) {
+        yvec[0] = -(zvec[1]*yvec[1]+zvec[2]*yvec[2]) / zvec[0] ; }
+    else if (zvec[1] != 0 ) {
+        yvec[1] = -(zvec[0]*yvec[0]+zvec[2]*yvec[2]) / zvec[1] ; }
+    else if (zvec[2] != 0 ) {
+        yvec[2] = -(zvec[0]*yvec[0]+zvec[1]*yvec[1]) / zvec[2] ; }
     else {
-        std::cerr << "\nERROR!  Cannot make vector perpendicular to bond axis!\n";
-        std::cout << "\nBVEC: " << bondvector[0] << " " << bondvector[1] << " " << bondvector[2] << std::endl;
-        std::cout << "ZVEC: " << zvec[0] << " " << zvec[1] << " " << zvec[2] << std::endl;
-        std::exit(1);
+        std::cerr << "\nERROR! Bond length is 0!  This cannoy be correct!\n";
+        std::cerr << "BondVEC: " << bondvector[0] << " " << bondvector[1] << " " << bondvector[2] << std::endl;
+        std::cerr << "ZVEC: " << zvec[0] << " " << zvec[1] << " " << zvec[2] << std::endl;
     }
-    if (dot(zvec,yvec) > 1e-5 ) {
-        yvec[0] = -1*(zvec[1]*yvec[1]+zvec[2]*yvec[2])/zvec[0];
-    }
+    /* Normalize */
     double ylen = pow(dot(yvec,yvec),0.5);
     for (int i=0; i<3;i++) {
         yvec[i] = yvec[i]/ylen;
