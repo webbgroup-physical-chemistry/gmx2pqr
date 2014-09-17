@@ -225,7 +225,7 @@ int main(int argc, const char * argv[])
 
     if ( psize > 0 ) {
         for (int i=0 ; i<psize; i++) {
-            std::cerr << " " << rxnpot[pN[i]];
+            std::cout << " " << rxnpot[pN[i]];
         }
     }
 

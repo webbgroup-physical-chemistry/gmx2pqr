@@ -65,6 +65,7 @@ typedef struct
     real                    delta, ring_dist;
     double                  rpdie;
     std::vector<int>        site_ndx, exclude_ndx;
+    bool                    dopqr;
     bool                    bVerbose;
     std::vector<gmx2amb>    amber;
 } t_analysisdata;
@@ -105,9 +106,12 @@ static int analyze_frame(t_topology *top, t_trxframe *fr, t_pbc *pbc,
     pqrname = pqrname.substr(0,pqrname.size()-4);
     std::stringstream pqr;
     pqr << pqrname << d->framen << ".pqr";
-    FILE *pqrout = ffopen(pqr.str().c_str(), "w");
-    if ( pqrout == NULL ) {
-        gmx_fatal(FARGS, "\nFailed to open output file, '%s'\n",pqrout);
+    FILE *pqrout;
+    if ( d->dopqr ) {
+        pqrout = ffopen(pqr.str().c_str(), "w");
+        if ( pqrout == NULL ) {
+            gmx_fatal(FARGS, "\nFailed to open output file, '%s'\n",pqrout);
+        }
     }
     
     /* Get the bond vector and bond midpoint */
@@ -214,32 +218,34 @@ static int analyze_frame(t_topology *top, t_trxframe *fr, t_pbc *pbc,
     }
 
     /* Write all the dummy atoms to the pqr file */
-    write_dummy_atom( pqrout, nzcomp, "MIDz" );
-    write_dummy_atom( pqrout, pzcomp, "MIDz" );
-    write_dummy_atom( pqrout, nycomp, "MIDy" );
-    write_dummy_atom( pqrout, pycomp, "MIDy" );
-    write_dummy_atom( pqrout, nxcomp, "MIDx" );
-    write_dummy_atom( pqrout, pxcomp, "MIDx" );
+    if ( d->dopqr ) {
+        write_dummy_atom( pqrout, nzcomp, "MIDz" );
+        write_dummy_atom( pqrout, pzcomp, "MIDz" );
+        write_dummy_atom( pqrout, nycomp, "MIDy" );
+        write_dummy_atom( pqrout, pycomp, "MIDy" );
+        write_dummy_atom( pqrout, nxcomp, "MIDx" );
+        write_dummy_atom( pqrout, pxcomp, "MIDx" );
     
-    write_dummy_atom( pqrout, nzcomp1, (std::string)*top->atoms.atomname[d->a1]+"z" );
-    write_dummy_atom( pqrout, pzcomp1, (std::string)*top->atoms.atomname[d->a1]+"z" );
-    write_dummy_atom( pqrout, nycomp1, (std::string)*top->atoms.atomname[d->a1]+"y" );
-    write_dummy_atom( pqrout, pycomp1, (std::string)*top->atoms.atomname[d->a1]+"y" );
-    write_dummy_atom( pqrout, nxcomp1, (std::string)*top->atoms.atomname[d->a1]+"x" );
-    write_dummy_atom( pqrout, pxcomp1, (std::string)*top->atoms.atomname[d->a1]+"x" );
+        write_dummy_atom( pqrout, nzcomp1, (std::string)*top->atoms.atomname[d->a1]+"z" );
+        write_dummy_atom( pqrout, pzcomp1, (std::string)*top->atoms.atomname[d->a1]+"z" );
+        write_dummy_atom( pqrout, nycomp1, (std::string)*top->atoms.atomname[d->a1]+"y" );
+        write_dummy_atom( pqrout, pycomp1, (std::string)*top->atoms.atomname[d->a1]+"y" );
+        write_dummy_atom( pqrout, nxcomp1, (std::string)*top->atoms.atomname[d->a1]+"x" );
+        write_dummy_atom( pqrout, pxcomp1, (std::string)*top->atoms.atomname[d->a1]+"x" );
     
-    write_dummy_atom( pqrout, nzcomp2, (std::string)*top->atoms.atomname[d->a2]+"z" );
-    write_dummy_atom( pqrout, pzcomp2, (std::string)*top->atoms.atomname[d->a2]+"z" );
-    write_dummy_atom( pqrout, nycomp2, (std::string)*top->atoms.atomname[d->a2]+"y" );
-    write_dummy_atom( pqrout, pycomp2, (std::string)*top->atoms.atomname[d->a2]+"y" );
-    write_dummy_atom( pqrout, nxcomp2, (std::string)*top->atoms.atomname[d->a2]+"x" );
-    write_dummy_atom( pqrout, pxcomp2, (std::string)*top->atoms.atomname[d->a2]+"x" );
+        write_dummy_atom( pqrout, nzcomp2, (std::string)*top->atoms.atomname[d->a2]+"z" );
+        write_dummy_atom( pqrout, pzcomp2, (std::string)*top->atoms.atomname[d->a2]+"z" );
+        write_dummy_atom( pqrout, nycomp2, (std::string)*top->atoms.atomname[d->a2]+"y" );
+        write_dummy_atom( pqrout, pycomp2, (std::string)*top->atoms.atomname[d->a2]+"y" );
+        write_dummy_atom( pqrout, nxcomp2, (std::string)*top->atoms.atomname[d->a2]+"x" );
+        write_dummy_atom( pqrout, pxcomp2, (std::string)*top->atoms.atomname[d->a2]+"x" );
     
-    if (d->site_ndx.size() > 0) {
-        for (int i=0; i<nsites; i++) {
-            std::stringstream key;
-            key << "p" << i;
-            write_dummy_atom( pqrout, &each_point[i][0], key.str());
+        if (d->site_ndx.size() > 0) {
+            for (int i=0; i<nsites; i++) {
+                std::stringstream key;
+                key << "p" << i;
+                write_dummy_atom( pqrout, &each_point[i][0], key.str());
+            }
         }
     }
     
@@ -290,8 +296,9 @@ static int analyze_frame(t_topology *top, t_trxframe *fr, t_pbc *pbc,
                 fprintf(stderr,"\nError: Frame %d, could not match %s %s %s %i\n",d->framen, atomname, resname, *top->atoms.atomtype[atom_ndx],i+1);
                 std::exit(1);
             }
-            fprintf(pqrout,"ATOM %6i %4s %4s %5i %11.3f %7.3f %7.3f %7.4f %7.3f\n",atom_ndx+1,atomname,resname,resid+1,fr->x[atom_ndx][XX]*10,fr->x[atom_ndx][YY]*10,fr->x[atom_ndx][ZZ]*10,charge,radius);
-            
+            if ( d->dopqr ) {
+                fprintf(pqrout,"ATOM %6i %4s %4s %5i %11.3f %7.3f %7.3f %7.4f %7.3f\n",atom_ndx+1,atomname,resname,resid+1,fr->x[atom_ndx][XX]*10,fr->x[atom_ndx][YY]*10,fr->x[atom_ndx][ZZ]*10,charge,radius);
+            }
             /* Do the field calculations now */
             bool keepAtom = true;
             calculate_field(midpoint, atom_ndx, *top, *fr, dat.field_mid, 1);
@@ -369,7 +376,9 @@ static int analyze_frame(t_topology *top, t_trxframe *fr, t_pbc *pbc,
     }
 
     /* close the pqr file */
-    fclose(pqrout);
+    if ( d->dopqr ) {
+        fclose(pqrout);
+    }
     /* increment the frame number */
     d->framen++;
     /* We need to return 0 to tell that everything went OK */
@@ -421,6 +430,7 @@ int gmx_gmx2pqr(int argc, char *argv[])
     static char     *exclude = NULL;
     static char     *site = NULL;
     bool            bVerbose = false; // 0=false, 1=true
+    bool            dopqr = true;
     
     t_pargs         pa[] = {
         { "-a1", TRUE, etINT,
@@ -435,6 +445,8 @@ int gmx_gmx2pqr(int argc, char *argv[])
             {&pdie}, "Protein dielectric constant"},
         { "-delta", TRUE, etREAL,
             {&delta}, "(nm) Spacing between dummy atoms at the bond midpoint"},
+        { "-dopqr", TRUE, etBOOL,
+            {&dopqr}, "Write out a .pqr file.  Default: True"},
         { "-v", FALSE, etBOOL,
             {&bVerbose}, "Be slightly more verbose"}
     };
@@ -624,6 +636,7 @@ int gmx_gmx2pqr(int argc, char *argv[])
     d.exclude_ndx = exclude_ndx;
     d.framen = 0;
     d.pqr = framepqr;
+    d.dopqr = dopqr;
     d.bVerbose = bVerbose;
     /* Parse through the frames */
     gmx_ana_do(trj, 0, &analyze_frame, &d);
